@@ -1,13 +1,32 @@
 ---
 - name: user
   hosts: demo
-  vars_prompt:
-    - name: user
-      prompt: "Enter user name"
-      private: no
   tasks:
-    - name: Create user
-      user:
-        name: "{{ user }}"
-        state: present
+    - name: Preconfig block
+      when: ansible_facts['distribution'] == 'CentOS'
+      block:
+        - name: Create user
+          vars:
+            user: yir2
+          user:
+            name: "{{ user }}"
+            state: present
+          register: error
+        - name: Install curl
+          apt:
+            name: curl
+            update-cache: yes
+          register: error
+        - name: Fail on FAILED
+          command: echo "FAILED"
+          register: command_result
+          failed_when: "'FAILED' in command_result.stdout"
       become: true
+      rescue:
+        - name: Print error
+          debug:
+            var: error
+      always:
+        - name: Reboot
+          debug:
+            msg: "Doing reboot..."
