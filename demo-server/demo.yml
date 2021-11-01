@@ -3,4 +3,3 @@ demo:
     demo_1:
       ansible_host: 192.168.100.4
       ansible_user: yir
-

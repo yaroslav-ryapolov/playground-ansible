@@ -1,0 +1,13 @@
+---
+- name: user
+  hosts: demo
+  vars_prompt:
+    - name: user
+      prompt: "Enter user name"
+      private: no
+  tasks:
+    - name: Create user
+      user:
+        name: "{{ user }}"
+        state: present
+      become: true
