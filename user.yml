@@ -15,7 +15,7 @@
         - name: Install curl
           apt:
             name: curl
-            update-cache: yes
+            update-cache: true
           register: error
         - name: Fail on FAILED
           command: echo "FAILED"
