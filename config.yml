@@ -1,0 +1,75 @@
+---
+- name: Server preconfig
+  hosts: demo
+  tasks:
+    - name: Docker Install
+      block:
+        - name: Add universe app repository
+          apt_repository:
+            repo: "deb http://us.archive.ubuntu.com/ubuntu/ {{ ansible_distribution_release }} universe"
+            state: present
+
+        - name: Add Docker requirements
+          apt:
+            name:
+              - apt-transport-https
+              - ca-certificates
+              - curl
+              - gnupg
+              - lsb-release
+            update-cache: true
+            cache_valid_time: 86400
+
+        - name: Add Docker Key
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+
+        - name: Add Docker stable repository
+          apt_repository:
+            repo: >
+              deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg]
+              https://download.docker.com/linux/ubuntu
+              {{ ansible_distribution_release }} stable
+            state: present
+            update-cache: true
+            filename: docker
+
+        - name: Install Docker
+          apt:
+            name: docker-ce
+            update-cache: true
+
+        - name: Check Docker is installed successfully
+          service:
+            name: docker
+            state: restarted
+            enabled: true
+      become: true
+
+    - name: Docker-Compose Install
+      block:
+        - name: Get latest available version of Docker-Compose via GitHub
+          uri:
+            url: https://api.github.com/repos/docker/compose/releases/latest
+            body_format: json
+          register: dc_release_response
+
+        - name: Install latest Docker-Compose
+          get_url:
+            url: "https://github.com/docker/compose/releases/download/{{ dc_release_response.json.tag_name }}/docker-compose-Linux-x86_64"
+            dest: /usr/local/bin/docker-compose
+            mode: 0755
+      become: true
+
+    - name: Finilize installation
+      block:
+        - name: Add user to Docker group
+          user:
+            name: "{{ ansible_user }}"
+            groups: docker
+            append: true
+
+        - name: System restart
+          reboot:
+      become: true
